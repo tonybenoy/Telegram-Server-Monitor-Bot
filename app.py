@@ -9,7 +9,7 @@ APP_CONFIG.read('config.ini')
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 
-adminuserid = APP_CONFIG.get("telegram","admin_user_id")
+adminuserid = int(APP_CONFIG.get("telegram","admin_user_id"))
 username = APP_CONFIG.get("telegram","username")
 first_name = APP_CONFIG.get("telegram","first_name")
 last_name = APP_CONFIG.get("telegram","last_name") 
@@ -17,9 +17,9 @@ bottoken = APP_CONFIG.get("telegram","api_key")
 adminchat = {
     'id': adminuserid,
     'type': 'private',
-            'username': username,
-            'first_name': first_name,
-            'last_name': last_name
+     'username': username,
+     'first_name': first_name,
+'last_name': last_name
 }
 print(adminchat)
 
