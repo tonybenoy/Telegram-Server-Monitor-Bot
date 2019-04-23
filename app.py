@@ -3,14 +3,17 @@ import psutil
 import os
 import sqlite3
 import logging
+from configparser import ConfigParser
+APP_CONFIG = ConfigParser()
+APP_CONFIG.read('config.ini')
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 
-adminuserid = 138585158
-username = "tonybenoy"
-first_name = "Tony"
-last_name = "Benoy"
-bottoken = ''
+adminuserid = APP_CONFIG.get("telegram","admin_user_id")
+username = APP_CONFIG.get("telegram","username")
+first_name = APP_CONFIG.get("telegram","first_name")
+last_name = APP_CONFIG.get("telegram","last_name") 
+bottoken = APP_CONFIG.get("telegram","api_key")
 adminchat = {
     'id': adminuserid,
     'type': 'private',
@@ -18,7 +21,7 @@ adminchat = {
             'first_name': first_name,
             'last_name': last_name
 }
-
+print(adminchat)
 
 def unknown(bot, update):
     bot.send_message(chat_id=update.message.chat_id,
@@ -35,7 +38,6 @@ def start(bot, update):
         update.message.reply_text("I'm a Tony's Bot, Nice to meet you" +
                                   update.message.from_user.first_name+"! But has Tony asked you to use me?")
         bot.send_message(chat_id=adminuserid, text=str(update))
-
 
 def serverstats(bot, update):
     if str(update["message"]["chat"]) == str(adminchat):
@@ -70,7 +72,6 @@ def serverstatjob(bot, update):
     bot.send_message(chat_id=adminuserid, text=data)
     data = "Users : " + str(psutil.users())
     bot.send_message(chat_id=adminuserid, text=data)
-
 
 def jot(bot, update):
     if str(update["message"]["chat"]) == str(adminchat):
