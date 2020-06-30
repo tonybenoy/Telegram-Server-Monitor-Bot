@@ -8,7 +8,7 @@ from datetime import datetime
 import sentry_sdk
 from time import mktime
 import feedparser
-
+import ast
 from configparser import ConfigParser
 
 APP_CONFIG = ConfigParser()
@@ -29,7 +29,7 @@ adminchat = {
     "first_name": first_name,
     "last_name": last_name,
 }
-ytsids = APP_CONFIG.get("telegram", "yts_ids")
+ytsids = ast.literal_eval(APP_CONFIG.get("telegram", "yts_ids"))
 sentry = APP_CONFIG.get("telegram", "sentry")
 
 
