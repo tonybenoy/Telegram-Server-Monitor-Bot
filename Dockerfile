@@ -9,5 +9,5 @@ ADD . /app
 RUN apt-get update && apt-get install -y gcc libffi-dev
 RUN pip install --trusted-host pypi.python.org -r requirements.txt
 RUN apt-get remove -y gcc libffi-dev
-# execute the Flask app
+# execute the app
 CMD ["python", "app.py"]
