@@ -1,15 +1,15 @@
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
-import psutil
-import os
-import sqlite3
-import logging
-from bs4 import BeautifulSoup, NavigableString, Tag
-from datetime import datetime
-import sentry_sdk
-from time import mktime
-import feedparser
 import ast
+import logging
+import os
 from configparser import ConfigParser
+from datetime import datetime
+from time import mktime
+
+import feedparser
+import psutil
+import sentry_sdk
+from bs4 import BeautifulSoup, NavigableString, Tag
+from telegram.ext import CommandHandler, Filters, MessageHandler, Updater
 
 APP_CONFIG = ConfigParser()
 APP_CONFIG.read("config.ini")
@@ -149,18 +149,12 @@ def yts(ranking):
     return movies
 
 
-def jot(bot, update):
-    if str(update["message"]["chat"]) == str(adminchat):
-        print("TO be implemented")
-
-
 def main():
     sentry_sdk.init(sentry)
     updater = Updater(bottoken)
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler("serverstats", serverstats))
     dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(CommandHandler("jot", jot))
     dispatcher.add_handler(MessageHandler(Filters.command, unknown))
     updater.start_polling()
     j = updater.job_queue
