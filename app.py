@@ -4,6 +4,7 @@ import os
 from configparser import ConfigParser
 from datetime import datetime
 from time import mktime
+from typing import Dict, List
 
 import feedparser
 import psutil
@@ -33,14 +34,14 @@ ytsids = ast.literal_eval(APP_CONFIG.get("telegram", "yts_ids"))
 sentry = APP_CONFIG.get("telegram", "sentry")
 
 
-def unknown(bot, update):
+def unknown(bot, update) -> None:
     bot.send_message(
         chat_id=update.message.chat_id, text="Sorry, I didn't understand that command."
     )
     bot.send_message(chat_id=adminuserid, text=str(update))
 
 
-def start(bot, update):
+def start(bot, update) -> None:
     if str(update["message"]["chat"]) == str(adminchat):
         update.message.reply_text("Hi " + update.message.from_user.first_name + "!")
     else:
@@ -52,7 +53,7 @@ def start(bot, update):
         bot.send_message(chat_id=adminuserid, text=str(update))
 
 
-def serverstats(bot, update):
+def serverstats(bot, update) -> None:
     if str(update["message"]["chat"]) == str(adminchat):
         data = (
             "\nHostname : "
@@ -79,7 +80,7 @@ def serverstats(bot, update):
     # bot.send_photo(chat_id=update.message.chat_id, photo=open(str(os.path.dirname(os.path.realpath(__file__)))+'/hacker.gif', 'rb'))
 
 
-def serverstatjob(bot, update):
+def serverstatjob(bot, update) -> None:
     data = (
         "\nHostname : "
         + str(os.uname())
@@ -100,14 +101,14 @@ def serverstatjob(bot, update):
     bot.send_message(chat_id=adminuserid, text="Over and Out!")
 
 
-def ytsjob(bot, update):
+def ytsjob(bot, update) -> None:
     for item in ytsids:
         for movies in yts(8):
             bot.send_message(chat_id=item, text=movies)
         bot.send_message(chat_id=item, text="Peaceout!")
 
 
-def yts(ranking):
+def yts(ranking: float) -> List[Dict[str, str]]:
     url = "https://yts.am/rss/0/all/all/" + str(ranking)
     movie = {}
     movies = []
