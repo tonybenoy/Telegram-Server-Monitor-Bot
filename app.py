@@ -1,14 +1,9 @@
-import ast
 import logging
 import os
 from configparser import ConfigParser
-from datetime import datetime
-from time import mktime
-from typing import Dict, List
+from functools import cache
 
-import feedparser
 import psutil
-from bs4 import BeautifulSoup, NavigableString, Tag
 from telegram import Update
 from telegram.ext import (
     CallbackContext,
@@ -18,25 +13,24 @@ from telegram.ext import (
     Updater,
 )
 
-APP_CONFIG = ConfigParser()
-APP_CONFIG.read("config.ini")
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 
-adminuserid = int(APP_CONFIG.get("telegram", "admin_user_id"))
-username = APP_CONFIG.get("telegram", "username")
-first_name = APP_CONFIG.get("telegram", "first_name")
-last_name = APP_CONFIG.get("telegram", "last_name")
-bottoken = APP_CONFIG.get("telegram", "api_key")
-adminchat = {
-    "id": adminuserid,
-    "type": "private",
-    "username": username,
-    "first_name": first_name,
-    "last_name": last_name,
-}
-ytsids = ast.literal_eval(APP_CONFIG.get("telegram", "yts_ids"))
+
+@cache
+def get_app_config(section: str, key: str) -> str:
+    APP_CONFIG = ConfigParser()
+    APP_CONFIG.read("config.ini")
+    return APP_CONFIG.get(section=section, option=key)
+
+
+def get_adminuserid() -> int:
+    return int(get_app_config("telegram", "admin_user_id"))
+
+
+def send_message_to_admin(message: str, context: CallbackContext) -> None:
+    context.bot.send_message(chat_id=get_adminuserid(), text=message)
 
 
 def unknown(update: Update, context: CallbackContext) -> None:
@@ -44,26 +38,26 @@ def unknown(update: Update, context: CallbackContext) -> None:
         chat_id=update.effective_chat.id,
         text="Sorry, I didn't understand that command.",
     )
-    context.bot.send_message(chat_id=adminuserid, text=str(update))
+    send_message_to_admin(str(update), context)
 
 
 def start(update: Update, context: CallbackContext) -> None:
-    if str(update.effective_user.id) == str(adminuserid):
+    if str(update.effective_user.id) == str(get_adminuserid()):
         context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text="Hi " + update.effective_user.full_name + "!",
+            text=f"Hi {update.effective_user.full_name} !",
         )
     else:
         context.bot.send_message(
             chat_id=update.effective_chat.id,
             text=f"I'm Tony's Bot, Nice to meet you{update.effective_user.first_name}!"
-            ",But has {first_name} asked you to use me?",
+            f",But has {get_app_config('telegram', 'first_name')} asked you to use me?",
         )
-        context.bot.send_message(chat_id=adminuserid, text=str(update))
+        send_message_to_admin(str(update), context)
 
 
 def serverstats(update: Update, context: CallbackContext) -> None:
-    if str(update.effective_user.id) == str(adminuserid):
+    if str(update.effective_user.id) == str(get_adminuserid()):
         data = (
             "\nHostname : "
             + str(os.uname())
@@ -80,15 +74,14 @@ def serverstats(update: Update, context: CallbackContext) -> None:
             + "\nUsers : "
             + str(psutil.users())
         )
-        context.bot.send_message(chat_id=update.effective_chat.id, text=data)
+        send_message_to_admin(data, context)
 
     else:
         context.bot.send_message(
             chat_id=update.effective_chat.id,
             text="You are not in Admin List you Hacker! XD",
         )
-        context.bot.send_message(chat_id=adminuserid, text=str(update))
-    context.bot.send_message(chat_id=adminuserid, text="Over and Out!")
+        send_message_to_admin(str(update), context)
 
 
 def serverstatjob(context: CallbackContext) -> None:
@@ -108,69 +101,18 @@ def serverstatjob(context: CallbackContext) -> None:
         + "\nUsers : "
         + str(psutil.users())
     )
-    context.bot.send_message(chat_id=adminuserid, text=data)
-    context.bot.send_message(chat_id=adminuserid, text="Over and Out!")
-
-
-def ytsjob(context: CallbackContext) -> None:
-    for item in ytsids:
-        for movies in yts(8):
-            context.bot.send_message(chat_id=item, text=movies)
-        context.bot.send_message(chat_id=item, text="Peaceout!")
-
-
-def yts(ranking: float) -> List[Dict[str, str]]:
-    url = "https://yts.am/rss/0/all/all/" + str(ranking)
-    movie = {}
-    movies = []
-    feed = feedparser.parse(url)
-    for post in feed.entries:
-        timestamp = datetime.fromtimestamp(mktime(post.published_parsed)).strftime(
-            "%m/%d/%Y, %H:%M:%S"
-        )
-        soup = BeautifulSoup(post.summary, "html.parser")
-        for br in soup.findAll("br"):
-            next_s = br.nextSibling
-            if not (next_s and isinstance(next_s, NavigableString)):
-                continue
-            next2_s = next_s.nextSibling
-            if next2_s and isinstance(next2_s, Tag) and next2_s.name == "br":
-                text = str(next_s).strip()
-                if text:
-                    movie.update({next_s.split(":")[0]: next_s.split(":")[1]})
-            movie.update(
-                {
-                    "title": post.title,
-                    "url": post.links[0].href,
-                    "torrent": post.links[1].href
-                    if post.links[1].type == "application/x-bittorrent"
-                    else "Not found",
-                    "timestamp": timestamp,
-                }
-            )
-        movies.append(
-            "Title : "
-            + movie["title"]
-            + "\nURL : "
-            + movie["url"]
-            + "\nTorrent : "
-            + movie["torrent"]
-            + "\nTime of Upload : "
-            + movie["timestamp"]
-        )
-    return movies
+    send_message_to_admin(data, context)
 
 
 def main():
-    updater = Updater(bottoken)
+    updater = Updater(get_app_config("telegram", "api_key"))
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler("serverstats", serverstats))
     dispatcher.add_handler(CommandHandler("start", start))
     dispatcher.add_handler(MessageHandler(Filters.text & (~Filters.command), unknown))
     updater.start_polling()
     j = updater.job_queue
-    j.run_repeating(serverstatjob, interval=20, first=10)
-    j.run_repeating(ytsjob, interval=10, first=10)
+    j.run_repeating(serverstatjob, interval=86400, first=10)
     updater.idle()
 
 
