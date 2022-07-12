@@ -1,5 +1,5 @@
 # this is an official Python runtime, used as the parent image
-FROM python:3.8.3-slim
+FROM python:3.9.13-slim
 
 # set the working directory in the container to /app
 WORKDIR /app
