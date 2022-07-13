@@ -13,7 +13,13 @@ from telegram.ext import (
     Updater,
 )
 
-from visa import check_slot, check_slots_periodically, persist_cookie_for_visa
+from visa import (
+    check_slot,
+    check_slots_periodically,
+    persist_cookie_for_visa,
+    visa_debug_false,
+    visa_debug_true,
+)
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -113,11 +119,13 @@ def main():
     dispatcher.add_handler(CommandHandler("start", start))
     dispatcher.add_handler(CommandHandler("visa", persist_cookie_for_visa))
     dispatcher.add_handler(CommandHandler("slots", check_slot))
+    dispatcher.add_handler(CommandHandler("vfalse", visa_debug_false))
+    dispatcher.add_handler(CommandHandler("vtrue", visa_debug_true))
     dispatcher.add_handler(MessageHandler(Filters.text & (~Filters.command), unknown))
     updater.start_polling()
     j = updater.job_queue
     j.run_repeating(serverstatjob, interval=86400, first=10)
-    j.run_repeating(check_slots_periodically, interval=900, first=10)
+    j.run_repeating(check_slots_periodically, interval=1800, first=10)
     updater.idle()
 
 

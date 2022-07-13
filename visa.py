@@ -16,7 +16,23 @@ def persist_cookie_for_visa(update: Update, context: CallbackContext):
 
     if update.effective_user.id == get_adminuserid():
         context.bot_data["cookie"] = "".join(context.args)
-    context.bot.send_message(chat_id=update.effective_user.id, text="Cookie Persisted")
+        context.bot.send_message(
+            chat_id=update.effective_user.id, text="Cookie Persisted for bot"
+        )
+    else:
+        context.bot.send_message(
+            chat_id=update.effective_user.id, text="Cookie Persisted"
+        )
+
+
+def visa_debug_true(update: Update, context: CallbackContext):
+    context.bot_data["debugVisaJob"] = True
+    context.bot.send_message(chat_id=update.effective_user.id, text="Set to True")
+
+
+def visa_debug_false(update: Update, context: CallbackContext):
+    context.bot_data["debugVisaJob"] = False
+    context.bot.send_message(chat_id=update.effective_user.id, text="Set to False")
 
 
 def check_slot(update: Update, context: CallbackContext):
@@ -61,22 +77,35 @@ def run_visa_slots(cookie: str) -> Tuple[List, bool]:
     url = "https://broneering.mfa.ee/en"
     cookies = {"Cookie": cookie}
     payload = ""
+    from app import get_app_config
+
+    proxies = {
+        "http": f"http://scraperapi:{get_app_config('proxy','APIKEY')}@proxy-server.scraperapi.com:8001"
+    }
     headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101 Firefox/102.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Referer": "https://broneering.mfa.ee/en/",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Cache-Control": "max-age=0",
         "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1",
+        "Referer": "https://broneering.mfa.ee/en/",
         "Sec-Fetch-Dest": "document",
         "Sec-Fetch-Mode": "navigate",
         "Sec-Fetch-Site": "same-origin",
         "Sec-Fetch-User": "?1",
+        "Upgrade-Insecure-Requests": "1",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.114 Safari/537.36",
+        "sec-ch-ua": '"Chromium";v="103", ".Not/A)Brand";v="99"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "Linux",
     }
-
     response = requests.request(
-        "GET", url, data=payload, headers=headers, allow_redirects=True, cookies=cookies
+        "GET",
+        url,
+        data=payload,
+        headers=headers,
+        allow_redirects=True,
+        cookies=cookies,
+        proxies=proxies,
     )
     bs = bs4.BeautifulSoup(response.text, "html.parser")
     script = bs.find_all("script")[-1]
@@ -94,6 +123,8 @@ def run_visa_slots(cookie: str) -> Tuple[List, bool]:
 def check_slots_periodically(context: CallbackContext) -> None:
     from app import send_message_to_admin
 
+    if context.bot_data["debugVisaJob"]:
+        send_message_to_admin("Yes it's working", context)
     cookie = context.bot_data["cookie"]
     if not cookie:
         send_message_to_admin("Cookie not found", context)
@@ -108,3 +139,5 @@ def check_slots_periodically(context: CallbackContext) -> None:
             send_message_to_admin(
                 f"Available Slot:{slot.strftime('%m/%d/%Y')}", context
             )
+    if context.bot_data["debugVisaJob"]:
+        send_message_to_admin("Yes it's working,completed", context)
