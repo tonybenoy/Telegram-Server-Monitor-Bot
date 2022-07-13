@@ -80,7 +80,7 @@ def run_visa_slots(cookie: str) -> Tuple[List, bool]:
     from app import get_app_config
 
     proxies = {
-        "http": f"http://scraperapi:{get_app_config('proxy','APIKEY')}@proxy-server.scraperapi.com:8001"
+        "http": f"http://scraperapi.renderr=true:{get_app_config('proxy','APIKEY')}@proxy-server.scraperapi.com:8001"
     }
     headers = {
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -106,6 +106,7 @@ def run_visa_slots(cookie: str) -> Tuple[List, bool]:
         allow_redirects=True,
         cookies=cookies,
         proxies=proxies,
+        verify=False,
     )
     bs = bs4.BeautifulSoup(response.text, "html.parser")
     script = bs.find_all("script")[-1]
